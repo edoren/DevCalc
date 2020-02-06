@@ -1,13 +1,15 @@
 mod token;
 mod number;
 mod operator;
+extern crate clap;
+
+use std::collections::VecDeque;
+
+use clap::{App, Arg}; 
 
 use token::Token;
 use number::{Number, NumberBase};
 use operator::Operator;
-
-use std::collections::VecDeque;
-use std::env;
 
 //////////////////////////////////////////////////////////////////////
 /// Utils Common
@@ -120,13 +122,18 @@ fn shunting_yard(input: Vec<u8>) -> Option<VecDeque<Box<dyn Token>>> {
             }
 
             else if operator == Operator::RPARENTHESIS {
+                let mut lparenth_found = false;
                 while let Some(top_operator) = operator_stack.last() {
                     if *top_operator != Operator::LPARENTHESIS {
                         tokens.push_back(Box::new(operator_stack.pop().unwrap()));
                     } else {
                         operator_stack.pop();
+                        lparenth_found = true;
                         break;
                     }
+                }
+                if !lparenth_found {
+                    error_msg = "Error mismatched parenthesis".to_owned();
                 }
                 continue;
             }
@@ -169,20 +176,22 @@ fn shunting_yard(input: Vec<u8>) -> Option<VecDeque<Box<dyn Token>>> {
     return Some(tokens);
 }
 
-fn posfix_eval(tokens: &VecDeque<Box<dyn Token>>) {
+fn postfix_eval(tokens: &VecDeque<Box<dyn Token>>) {
     let mut stack: Vec<Number> = Vec::new();
 
     let mut output_lines: Vec<String> = Vec::new();
 
     for i in 0..tokens.len() {
-        if let Some(number) = tokens[i].as_any().downcast_ref::<Number>() {
+        let token = tokens[i].as_any();
+        if let Some(number) = token.downcast_ref::<Number>() {
             stack.push(*number);
-        } if let Some(operator) = tokens[i].as_any().downcast_ref::<Operator>() {
+        } if let Some(operator) = token.downcast_ref::<Operator>() {
             if stack.len() >= 2 {
                 let b = stack.pop().unwrap();
                 let a = stack.pop().unwrap();
                 if let Some(result) = operator.operate(a, b) {
-                    output_lines.push(format!("{0:#b} {1} {2:#b} = {3:#b} ({0:#?} {1} {2:#?} = {3})", a, operator, b, result));
+                    let line = format!("{0:#b} {1} {2:#b} = {3:#b} ({0:#?} {1} {2:#?} = {3})", a, operator, b, result);
+                    output_lines.push(line);
                     stack.push(result);
                 } else {
                     println!("Error evaluating expression: {0:#b} ({0:?}) {1} {2:#b} ({2:?})", a, operator, b);
@@ -202,12 +211,21 @@ fn posfix_eval(tokens: &VecDeque<Box<dyn Token>>) {
 }
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
-    let operation: String = args[1].clone();
+    let matches = App::new("Binary Calculator")
+        .version("1.0")
+        .author("Manuel Sabogal <mfer32@gmail.com>")
+        .about("Binary step to step calculator")
+        .arg(Arg::with_name("EXPRESSION")
+            .help("The expression to evaluate")
+            .required(true)
+            .index(1))
+        .get_matches();
+
+    let operation = String::from(matches.value_of("EXPRESSION").unwrap());
 
     if let Some(tokens) = shunting_yard(operation.clone().into_bytes()) {
         println!("Executing: {}", operation);
         println!();
-        posfix_eval(&tokens);
+        postfix_eval(&tokens);
     }
 }
