@@ -3,6 +3,8 @@ mod number;
 mod operator;
 extern crate clap;
 
+extern crate rug;
+
 use std::collections::VecDeque;
 
 use clap::{App, Arg}; 
@@ -33,18 +35,17 @@ fn is_valid_hexadecimal_number(ch: u8) -> bool {
 //////////////////////////////////////////////////////////////////////
 
 fn shunting_yard(input: Vec<u8>) -> Option<VecDeque<Box<dyn Token>>> {
-    let mut error_msg: String = String::new();
+    let mut error_msg = String::new();
     let mut start;
     let mut end = 0;
 
-    let mut tokens: VecDeque<Box<dyn Token>> = VecDeque::new();
-    let mut operator_stack: Vec<Operator> = Vec::new();
+    let mut tokens = VecDeque::<Box<dyn Token>>::new();
+    let mut operator_stack = Vec::<Operator>::new();
 
     loop {
         start = end;
 
         if !error_msg.is_empty() {
-            println!();
             println!("Error parsing in column {}: {}", end, error_msg);
             println!("{}", String::from_utf8(input).unwrap());
             println!("{0}^\n{0}Error here", " ".repeat(end - 1));
@@ -83,7 +84,7 @@ fn shunting_yard(input: Vec<u8>) -> Option<VecDeque<Box<dyn Token>>> {
                 if end >= input.len() {
                     break;
                 }
-                let next: u8 = input[end];
+                let next = input[end];
                 let is_valid;
                 match num_base {
                     NumberBase::BIN => is_valid = is_valid_binary_number(next),
@@ -111,7 +112,7 @@ fn shunting_yard(input: Vec<u8>) -> Option<VecDeque<Box<dyn Token>>> {
         // Check function: TODO
 
         // Get the next operator
-        let op: Option<Operator> = Operator::from_bytes(&input[start..input.len()]);
+        let op = Operator::from_bytes(&input[start..input.len()]);
         if op == Some(Operator::SHIFTL) || op == Some(Operator::SHIFTR) { end += 1; }
 
         // Check operator
@@ -177,9 +178,8 @@ fn shunting_yard(input: Vec<u8>) -> Option<VecDeque<Box<dyn Token>>> {
 }
 
 fn postfix_eval(tokens: &VecDeque<Box<dyn Token>>) {
-    let mut stack: Vec<Number> = Vec::new();
-
-    let mut output_lines: Vec<String> = Vec::new();
+    let mut stack = Vec::<Number>::new();
+    let mut output_lines = Vec::<String>::new();
 
     for i in 0..tokens.len() {
         let token = tokens[i].as_any();
