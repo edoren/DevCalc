@@ -8,4 +8,5 @@ edition = "2018"
 
 [dependencies]
 clap = "2.33.0"
-rug = "1.7"
+num-bigint = "0.2.6"
+num-traits = "0.2.11"

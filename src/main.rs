@@ -3,8 +3,6 @@ mod number;
 mod operator;
 extern crate clap;
 
-extern crate rug;
-
 use std::collections::VecDeque;
 
 use clap::{App, Arg}; 
@@ -184,17 +182,17 @@ fn postfix_eval(tokens: &VecDeque<Box<dyn Token>>) {
     for i in 0..tokens.len() {
         let token = tokens[i].as_any();
         if let Some(number) = token.downcast_ref::<Number>() {
-            stack.push(*number);
+            stack.push(number.clone());
         } if let Some(operator) = token.downcast_ref::<Operator>() {
             if stack.len() >= 2 {
                 let b = stack.pop().unwrap();
                 let a = stack.pop().unwrap();
-                if let Some(result) = operator.operate(a, b) {
-                    let line = format!("{0:#b} {1} {2:#b} = {3:#b} ({0:#?} {1} {2:#?} = {3})", a, operator, b, result);
+                if let Some(result) = operator.operate(a.clone(), b.clone()) {
+                    let line = format!("{0:#b} {1} {2:#b} = {3:#b} ({0:#?} {1} {2:#?} = {3:#?})", a, operator, b, result);
                     output_lines.push(line);
                     stack.push(result);
                 } else {
-                    println!("Error evaluating expression: {0:#b} ({0:?}) {1} {2:#b} ({2:?})", a, operator, b);
+                    println!("Error evaluating expression: {0:#b} ({0:#?}) {1} {2:#b} ({2:#?})", a, operator, b);
                     return;
                 }
             } else {
