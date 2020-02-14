@@ -255,8 +255,6 @@ fn main() {
 
     let operation = String::from(matches.value_of("EXPRESSION").unwrap());
 
-    println!("Input: {:#?}", operation.clone().into_bytes());
-
     if let Some(tokens) = shunting_yard(operation.clone().into_bytes()) {
         println!("Executing: {}\n", operation);
         
