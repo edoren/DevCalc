@@ -259,7 +259,7 @@ fn main() {
         println!("Executing: {}\n", operation);
         
         if let Some(result) = postfix_eval(&tokens) {
-            println!("\nResult: {:#X}", result);
+            println!("\nResult: {:#?}", result);
         }
     }
 }
