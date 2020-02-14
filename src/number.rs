@@ -5,7 +5,7 @@ use std::any;
 use std::fmt;
 use std::ops;
 
-use num_bigint::{BigUint};
+use num_bigint::{BigInt};
 use num_traits::{Zero, ToPrimitive};
 use crate::token::Token;
 
@@ -34,17 +34,17 @@ impl NumberBase {
 
 #[derive(Clone)]
 pub struct Number {
-    value: BigUint,
+    value: BigInt,
     base: NumberBase
 }
 
 impl Number {
     pub fn from_slice(slice: &[u8], base: &NumberBase) -> Number {
-        if let Some(result) = BigUint::parse_bytes(slice, *base as u32) {
+        if let Some(result) = BigInt::parse_bytes(slice, *base as u32) {
             Number { value: result, base: *base }
         } else {
             println!("Error parsing number from slice");
-            Number { value: BigUint::zero(), base: *base }
+            Number { value: BigInt::zero(), base: *base }
         }
     }
 }
@@ -69,6 +69,22 @@ impl ops::Sub<Number> for Number {
 
     fn sub(self, rhs: Number) -> Number {
         Number { value: self.value - rhs.value, base: self.base }
+    }
+}
+
+impl ops::Mul<Number> for Number {
+    type Output = Number;
+
+    fn mul(self, rhs: Number) -> Number {
+        Number { value: self.value * rhs.value, base: self.base }
+    }
+}
+
+impl ops::Div<Number> for Number {
+    type Output = Number;
+
+    fn div(self, rhs: Number) -> Number {
+        Number { value: self.value / rhs.value, base: self.base }
     }
 }
 
