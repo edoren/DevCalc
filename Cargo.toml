@@ -1,5 +1,5 @@
 [package]
-name = "bin_calc"
+name = "devcalc"
 version = "0.1.0"
 authors = ["Edoren"]
 edition = "2018"
