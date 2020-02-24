@@ -5,7 +5,7 @@ extern crate clap;
 
 use std::collections::VecDeque;
 
-use clap::{App, Arg};
+use clap::{App, Arg, value_t};
 
 use number::{Number, NumberBase};
 use operator::Operator;
@@ -32,7 +32,7 @@ fn is_valid_hexadecimal_number(ch: u8) -> bool {
 /// Shunting Yard
 //////////////////////////////////////////////////////////////////////
 
-fn shunting_yard(input: Vec<u8>) -> Option<VecDeque<Box<dyn Token>>> {
+fn shunting_yard(input: Vec<u8>) -> Result<VecDeque<Box<dyn Token>>, String> {
     let mut error_msg = String::new();
     let mut start;
     let mut end = 0;
@@ -47,7 +47,7 @@ fn shunting_yard(input: Vec<u8>) -> Option<VecDeque<Box<dyn Token>>> {
             println!("Error parsing in column {}: {}", end, error_msg);
             println!("{}", String::from_utf8(input).unwrap());
             println!("{0}^\n{0}Error here", " ".repeat(end - 1));
-            return None;
+            return Err("Parsing Error".to_owned());
         }
 
         if start >= input.len() {
@@ -115,8 +115,9 @@ fn shunting_yard(input: Vec<u8>) -> Option<VecDeque<Box<dyn Token>>> {
                 } else {
                     start
                 };
-                let number = Number::from_slice(&input[num_start..end], &num_base);
-                tokens.push_back(Box::new(number));
+                if let Ok(number) = Number::from_slice(&input[num_start..end], &num_base) {
+                    tokens.push_back(Box::new(number));
+                }
             }
             continue;
         }
@@ -179,25 +180,17 @@ fn shunting_yard(input: Vec<u8>) -> Option<VecDeque<Box<dyn Token>>> {
         let op = operator_stack.pop().unwrap();
         if op == Operator::LPARENTHESIS || op == Operator::RPARENTHESIS {
             println!("Error mismatched parenthesis");
-            return None;
+            return Err("Parsing Error".to_owned());
         }
         tokens.push_back(Box::new(op));
     }
 
-    return Some(tokens);
+    return Ok(tokens);
 }
 
-fn postfix_eval(tokens: &VecDeque<Box<dyn Token>>) -> Option<Number> {
+fn postfix_eval(tokens: &VecDeque<Box<dyn Token>>) -> Option<Vec::<(Number, Operator, Number, Number)>> {
     let mut stack = Vec::<Number>::new();
     let mut operations = Vec::<(Number, Operator, Number, Number)>::new();
-
-    if tokens.len() == 1 {
-        if let Some(number) = tokens[0].as_any().downcast_ref::<Number>() {
-            return Some(number.clone());
-        } else {
-            return None;
-        }
-    }
 
     for i in 0..tokens.len() {
         let token = tokens[i].as_any();
@@ -226,40 +219,57 @@ fn postfix_eval(tokens: &VecDeque<Box<dyn Token>>) -> Option<Number> {
     }
 
     if !operations.is_empty() {
-        for operation in &operations {
-            let (a, operator, b, result) = operation;
-            let line = format!(
-                "{0:#b} {1} {2:#b} = {3:#b} ({0:#?} {1} {2:#?} = {3:#?})",
-                a, operator, b, result
-            );
-            println!("{}", line);
-        }
-        return Some(operations.last().unwrap().3.clone());
+        return Some(operations);
     }
 
     return None;
 }
 
 fn main() {
-    let matches = App::new("Binary Calculator")
+    let matches = App::new("Developer Calculator")
         .version("1.0")
         .author("Manuel Sabogal <mfer32@gmail.com>")
-        .about("Binary step to step calculator")
+        .about("Developer step by step calculator")
         .arg(
             Arg::with_name("EXPRESSION")
                 .help("The expression to evaluate")
                 .required(true)
                 .index(1),
         )
+        .arg(
+            Arg::with_name("base")
+                .short("b")
+                .long("base")
+                .value_name("BASE")
+                .help("Set the base for the output")
+                .possible_values(&["bin", "2", "oct", "8", "dec", "10", "hex", "16"])
+                .default_value("dec")
+                .takes_value(true),
+        )
         .get_matches();
 
-    let operation = String::from(matches.value_of("EXPRESSION").unwrap());
+    let operation = value_t!(matches.value_of("EXPRESSION"), String).unwrap_or_else(|e| e.exit());
+    let output_base = value_t!(matches.value_of("base"), NumberBase).unwrap_or_else(|e| e.exit());
 
-    if let Some(tokens) = shunting_yard(operation.clone().into_bytes()) {
+    if let Ok(tokens) = shunting_yard(operation.clone().into_bytes()) {
+        if tokens.len() == 1 {
+            if let Some(number) = tokens[0].as_any().downcast_ref::<Number>() {
+                println!("\nResult: {:#}", number.clone().set_base(&output_base));
+                return;
+            }
+        }
+
         println!("Executing: {}\n", operation);
-        
-        if let Some(result) = postfix_eval(&tokens) {
-            println!("\nResult: {:#?}", result);
+        if let Some(mut operations) = postfix_eval(&tokens) {
+            for operation in &mut operations {
+                let (a, operator, b, result) = operation;
+                let line = format!(
+                    "{0:#b} {1} {2:#b} = {3:#b} ({0:#} {1} {2:#} = {3:#})",
+                    a, operator, b, result.set_base(&output_base)
+                );
+                println!("{}", line);
+            }
+            println!("\nResult: {:#}", operations.last().unwrap().3);
         }
     }
 }
