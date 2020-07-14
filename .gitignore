@@ -1,2 +1,7 @@
+# VS and VSCode
+/.vs
+/.vscode
+
+# Cargo
 /target
 **/*.rs.bk

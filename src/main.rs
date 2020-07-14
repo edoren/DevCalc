@@ -254,7 +254,10 @@ fn main() {
     if let Ok(tokens) = shunting_yard(operation.clone().into_bytes()) {
         if tokens.len() == 1 {
             if let Some(number) = tokens[0].as_any().downcast_ref::<Number>() {
-                println!("\nResult: {:#}", number.clone().set_base(&output_base));
+                println!("Binary: {:#}", number.clone().set_base(&NumberBase::BIN));
+                println!("Octal: {:#}", number.clone().set_base(&NumberBase::OCT));
+                println!("Decimal: {:#}", number.clone().set_base(&NumberBase::DEC));
+                println!("Hexadecimal: {:#}", number.clone().set_base(&NumberBase::HEX));
                 return;
             }
         }
@@ -269,7 +272,9 @@ fn main() {
                 );
                 println!("{}", line);
             }
-            println!("\nResult: {:#}", operations.last().unwrap().3);
+            let mut result = operations.last().unwrap().3.clone();
+            println!();
+            println!("Result: {:#}", result.set_base(&output_base));
         }
     }
 }
