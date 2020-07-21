@@ -20,7 +20,7 @@ cargo install --git https://github.com/edoren/DevCalc --tag v0.1.0
 | DIVISION           | `/`      |
 | BINARY AND         | `&`      |
 | BINARY XOR         | `^`      |
-| BINARY OR          | `|`      |
+| BINARY OR          | `\|`     |
 | BINARY SHIFT LEFT  | `<<`     |
 | BINARY SHIFT RIGHT | `>>`     |
 
@@ -28,11 +28,11 @@ cargo install --git https://github.com/edoren/DevCalc --tag v0.1.0
 
 In order to execute expressions the program detect the number in different bases 
 
-| Base        | Prefix | Example   |
-|-------------|--------|-----------|
+| Base        | Prefix | Example       |
+|-------------|--------|---------------|
 | Binary      | `0b`   | **0b**1101110 |
 | Octal       | `0o`   | **0o**1647023 |
-| Decimal     | None   | 123456789 |
+| Decimal     | None   | 123456789     |
 | Hexadecimal | `0x`   | **0x**123CDEF |
 
 Note that hexadecimal supports both upper and lower case letters
